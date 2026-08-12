@@ -5,7 +5,10 @@
  * @format
  */
 
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  NavigationContainerRef,
+} from '@react-navigation/native';
 import { StatusBar, Text, useColorScheme, View } from 'react-native';
 import {
   SafeAreaProvider,
@@ -20,7 +23,7 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <AppContent />
+      <AppContent />
     </SafeAreaProvider>
   );
 }
@@ -30,7 +33,7 @@ function AppContent() {
 
   return (
     <NavigationContainer ref={navigationRef}>
-       <LoginManager/>
+      <LoginManager />
     </NavigationContainer>
   );
 }
