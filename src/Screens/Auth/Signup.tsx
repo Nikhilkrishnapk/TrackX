@@ -21,10 +21,11 @@ import EyeIcon from '../../assets/images/eyebtn.svg';
 
 const { width } = Dimensions.get('window');
 
-function Login() {
+function Signup() {
   const navigation = useNavigation<any>();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState <string> ('');
+  const [username, setUsername] = useState <string> ('');
+  const [password, setPassword] = useState <string> ('');
   const [showPassword, setShowPassword] = useState(false);
 
   const isEmailValid = email.length > 0 && email.includes('@');
@@ -36,21 +37,42 @@ function Login() {
         colors={['#C4213A', '#3A1230', '#1A0E24']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.header}>
-        <TouchableOpacity style={styles.menuDots}>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Hello{'\n'}Sign in!</Text>
+        style={styles.header}
+      >
+        <TouchableOpacity style={styles.menuDots}></TouchableOpacity>
+        <Text style={styles.headerTitle}>Create{'\n'}Your account</Text>
       </LinearGradient>
 
       {/* Form card */}
       <KeyboardAvoidingView
         style={styles.cardWrapper}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <ScrollView
           style={styles.card}
           contentContainerStyle={styles.cardContent}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Username field */}
+          <Text style={styles.label}>Fullname</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              value={username}
+              onChangeText={setUsername}
+              placeholder="eg: jack"
+              placeholderTextColor="#9C9CA6"
+              keyboardType="default"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {isEmailValid && (
+              <VerifiedIcon width={width * 0.05} height={width * 0.05} />
+            )}
+          </View>
+          <View style={styles.divider} />
+
           {/* Email field */}
           <Text style={styles.label}>Email</Text>
           <View style={styles.inputRow}>
@@ -82,15 +104,11 @@ function Login() {
               secureTextEntry={!showPassword}
               autoCapitalize="none"
             />
-            <TouchableOpacity onPress={() => setShowPassword(v => !v)}>
-            <EyeIcon width={width * 0.05} height={width * 0.05} />
+            <TouchableOpacity onPress={() => setShowPassword((v) => !v)}>
+              <EyeIcon width={width * 0.05} height={width * 0.05} />
             </TouchableOpacity>
           </View>
           <View style={styles.divider} />
-
-          <TouchableOpacity style={styles.forgotWrap}>
-            <Text style={styles.forgotText}>Forgot password?</Text>
-          </TouchableOpacity>
 
           {/* Sign in button */}
           <TouchableOpacity activeOpacity={0.85}>
@@ -98,17 +116,11 @@ function Login() {
               colors={['#C4213A', '#3A1230', '#1A0E24']}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
-              style={styles.signInButton}>
-              <Text style={styles.signInText}>SIGN IN</Text>
+              style={styles.signInButton}
+            >
+              <Text style={styles.signInText}>SIGN UP</Text>
             </LinearGradient>
           </TouchableOpacity>
-
-          <View style={styles.signupWrap}>
-            <Text style={styles.signupPrompt}>Don't have account?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-              <Text style={styles.signupLink}>Sign up</Text>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -215,4 +227,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Login;
+export default Signup;

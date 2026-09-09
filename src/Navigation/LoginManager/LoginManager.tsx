@@ -1,6 +1,6 @@
 import React from 'react';
-import AuthNavigator from '../authNavigator';
-import HomeNavigator from '../homeNavigator';
+import AuthNavigator from '../AuthNavigator';
+import HomeNavigator from '../HomeNavigator';
 
 const LoginManager = () => {
   

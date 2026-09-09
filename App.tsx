@@ -14,7 +14,7 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import LoginManager from './src/Navigation/LoginManager/LoginManager';
+import LoginManager from './src/navigation/LoginManager/LoginManager';
 import { useRef } from 'react';
 
 function App() {
