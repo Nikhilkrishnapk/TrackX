@@ -15,20 +15,46 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 
 // icon/images
-import Logo from '../../assets/images/trackXlogo.svg';
 import VerifiedIcon from '../../assets/images/tick.svg';
 import EyeIcon from '../../assets/images/eyebtn.svg';
+
+import {
+  isValidEmail,
+  SignupFormErrors,
+  validateSignupForm,
+} from '../../utils/validators';
+import { mapAuthError } from '../../utils/authErrors';
+import { signUp } from '../../services/firebase/auth';
 
 const { width } = Dimensions.get('window');
 
 function Signup() {
   const navigation = useNavigation<any>();
-  const [email, setEmail] = useState <string> ('');
-  const [username, setUsername] = useState <string> ('');
-  const [password, setPassword] = useState <string> ('');
+  const [email, setEmail] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<SignupFormErrors>({});
+  const [loading, setLoading] = useState(false);
+  const [signupError, setSignupError] = useState('');
 
-  const isEmailValid = email.length > 0 && email.includes('@');
+  const isEmailValid = isValidEmail(email);
+
+  const handleSubmit = async () => {
+    const validationErrors = validateSignupForm({ username, email, password });
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
+    try {
+      setLoading(true);
+      setSignupError('');
+      await signUp(email, password, username);
+    } catch (error: any) {
+      setSignupError(mapAuthError(error.code));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -60,18 +86,25 @@ function Signup() {
             <TextInput
               style={styles.input}
               value={username}
-              onChangeText={setUsername}
+              onChangeText={(text) => {
+                setUsername(text);
+                if (errors.username) {
+                  setErrors((prev) => ({ ...prev, username: undefined }));
+                }
+              }}
               placeholder="eg: jack"
               placeholderTextColor="#9C9CA6"
               keyboardType="default"
               autoCapitalize="none"
               autoCorrect={false}
             />
-            {isEmailValid && (
-              <VerifiedIcon width={width * 0.05} height={width * 0.05} />
-            )}
           </View>
-          <View style={styles.divider} />
+          {errors.username && (
+            <Text style={styles.errorText}>{errors.username}</Text>
+          )}
+          <View
+            style={[styles.divider, errors.username && styles.dividerError]}
+          />
 
           {/* Email field */}
           <Text style={styles.label}>Email</Text>
@@ -79,7 +112,12 @@ function Signup() {
             <TextInput
               style={styles.input}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (errors.email) {
+                  setErrors((prev) => ({ ...prev, email: undefined }));
+                }
+              }}
               placeholder="you@email.com"
               placeholderTextColor="#9C9CA6"
               keyboardType="email-address"
@@ -90,7 +128,8 @@ function Signup() {
               <VerifiedIcon width={width * 0.05} height={width * 0.05} />
             )}
           </View>
-          <View style={styles.divider} />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          <View style={[styles.divider, errors.email && styles.dividerError]} />
 
           {/* Password field */}
           <Text style={[styles.label, styles.fieldSpacing]}>Password</Text>
@@ -98,27 +137,44 @@ function Signup() {
             <TextInput
               style={styles.input}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (errors.password) {
+                  setErrors((prev) => ({ ...prev, password: undefined }));
+                }
+              }}
               placeholder="Enter your password"
               placeholderTextColor="#9C9CA6"
               secureTextEntry={!showPassword}
               autoCapitalize="none"
             />
             <TouchableOpacity onPress={() => setShowPassword((v) => !v)}>
-              <EyeIcon width={width * 0.05} height={width * 0.05} />
+              <EyeIcon width={18} height={18} />
             </TouchableOpacity>
           </View>
-          <View style={styles.divider} />
+          {errors.password && (
+            <Text style={styles.errorText}>{errors.password}</Text>
+          )}
+          <View
+            style={[styles.divider, errors.password && styles.dividerError]}
+          />
 
           {/* Sign in button */}
-          <TouchableOpacity activeOpacity={0.85}>
+          {signupError ? (
+            <Text style={styles.errorText}>{signupError}</Text>
+          ) : null}
+          <TouchableOpacity onPress={handleSubmit} activeOpacity={0.85}>
             <LinearGradient
               colors={['#C4213A', '#3A1230', '#1A0E24']}
               start={{ x: 0, y: 0.5 }}
               end={{ x: 1, y: 0.5 }}
               style={styles.signInButton}
             >
-              <Text style={styles.signInText}>SIGN UP</Text>
+              {loading ? (
+                <Text style={styles.signInText}>LOADING...</Text>
+              ) : (
+                <Text style={styles.signInText}>SIGN UP</Text>
+              )}
             </LinearGradient>
           </TouchableOpacity>
         </ScrollView>
@@ -145,7 +201,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#fff',
     fontSize: 34,
-    fontWeight: '700',
+    fontFamily: 'PlusJakartaSans-Bold',
     lineHeight: 40,
   },
   cardWrapper: {
@@ -167,7 +223,7 @@ const styles = StyleSheet.create({
   label: {
     color: '#B0243E',
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans-SemiBold',
     marginBottom: 8,
   },
   fieldSpacing: {
@@ -183,11 +239,22 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#1A1A1F',
+    fontFamily: 'PlusJakartaSans-Regular',
     paddingVertical: 0,
   },
   divider: {
     height: 1,
     backgroundColor: '#E1E1E6',
+  },
+  dividerError: {
+    backgroundColor: '#C4213A',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#C4213A',
+    fontFamily: 'PlusJakartaSans-Regular',
+    marginTop: -4,
+    marginBottom: 8,
   },
   forgotWrap: {
     alignSelf: 'flex-end',
@@ -207,11 +274,11 @@ const styles = StyleSheet.create({
   signInText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'PlusJakartaSans-Bold',
     letterSpacing: 1,
   },
   signupWrap: {
-    marginTop: 'auto',
+    marginTop: 40,
     paddingTop: 40,
     alignItems: 'flex-end',
   },
