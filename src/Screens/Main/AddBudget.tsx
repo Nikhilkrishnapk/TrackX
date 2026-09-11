@@ -1,10 +1,20 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { signOutUser } from '../../services/firebase/auth';
 
-const Home = () => {
+const AddBudget = () => {
+
+  const handleLogout = async () => {
+    try {
+      await signOutUser();
+    } catch (error: any) {
+      console.error('Logout failed', error);
+    }
+  };
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Home Screen</Text>
+      <Text style={styles.text}>Add budget Screen</Text>
+    
     </View>
   );
 };
@@ -20,4 +30,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Home;
+export default AddBudget;

@@ -135,12 +135,11 @@ function Login() {
             style={[styles.divider, errors.password && styles.dividerError]}
           />
 
-          <TouchableOpacity style={styles.forgotWrap}>
+          <TouchableOpacity onPress={() => navigation.navigate('ForgetPassword')} style={styles.forgotWrap}>
             <Text style={styles.forgotText}>Forgot password?</Text>
           </TouchableOpacity>
 
           {/* Sign in button */}
-     
           <TouchableOpacity onPress={handleSubmit} activeOpacity={0.85}>
             <LinearGradient
               colors={['#C4213A', '#3A1230', '#1A0E24']}
@@ -159,6 +158,7 @@ function Login() {
             <Text style={styles.loginErrorText}>{loginError}</Text>
           ) : null}
 
+          {/* sign up button in the login screen */}
           <View style={styles.signupWrap}>
             <Text style={styles.signupPrompt}>Don't have account?</Text>
             <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>

@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
 } from '@react-native-firebase/auth';
 import {
   getFirestore,
@@ -40,4 +41,9 @@ export const signIn = async (email: string, password: string) => {
 /////////////logout 
 export const signOutUser = async () => {
   return signOut(auth);
+};
+
+//////////reset password
+export const resetPassword = async (email: string) => {
+  return sendPasswordResetEmail(auth, email);
 };
