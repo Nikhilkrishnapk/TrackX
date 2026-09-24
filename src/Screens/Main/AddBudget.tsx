@@ -1,21 +1,32 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {  Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { signOutUser } from '../../services/firebase/auth';
+import Header from '../../components/Header';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const {height, width} = Dimensions.get('window');
 
 const AddBudget = () => {
 
-  const handleLogout = async () => {
-    try {
-      await signOutUser();
-    } catch (error: any) {
-      console.error('Logout failed', error);
-    }
-  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Add budget Screen</Text>
-    
-    </View>
+    <SafeAreaView style={styles.container} edges={['top']}>
+    <Header isBackButton={false} title="Add Transaction" />
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+    >
+      {/* screen container */}
+      <View
+        style={{
+          paddingHorizontal: width * 0.025,
+          paddingVertical: width * 0.025,
+        }}
+      >
+        
+
+      </View>
+    </ScrollView>
+  </SafeAreaView>
   );
 };
 

@@ -113,9 +113,13 @@ const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
   return (
-    <Tab.Navigator
+    <Tab.Navigator 
       tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{ headerShown: false }}>
+      screenOptions={{ 
+        headerShown: false,
+        sceneStyle: {
+          backgroundColor: '#faebeb'
+        } }}>
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="Activity" component={Activity} />
       <Tab.Screen name="AddBudget" component={AddBudget} />
