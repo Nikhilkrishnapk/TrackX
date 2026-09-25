@@ -37,8 +37,6 @@ const Profile = () => {
         >
           <ProfileCard />
 
-
-
           <TouchableOpacity onPress={handleLogout} style={styles.signInButton}>
             <LogoutIcon width={width * 0.07} height={width * 0.07} />
 
