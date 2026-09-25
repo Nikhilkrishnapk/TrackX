@@ -1,32 +1,43 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { signOutUser } from '../../services/firebase/auth';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Header from '../../components/Header';
+import TotalMonthlyEnvelop from '../../components/TotalMonthlyEnvelop';
+
+const {width, height} = Dimensions.get('window');
 
 const Budget = () => {
 
-  const handleLogout = async () => {
-    try {
-      await signOutUser();
-    } catch (error: any) {
-      console.error('Logout failed', error);
-    }
-  };
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Budget Screen</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <Header isBackButton={false} title="Budgets" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+      >
+        {/* screen container */}
+        <View
+          style={{
+            paddingHorizontal: width * 0.025,
+            paddingVertical: width * 0.025,
+          }}
+        >
+        
 
-    </View>
+          {/* net balance card */}
+          <TotalMonthlyEnvelop/>
+
+ 
+
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    fontFamily: 'PlusJakartaSans-Regular',
   },
 });
 

@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Svg, { Path, Circle } from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
@@ -66,6 +67,7 @@ const REGULAR_TABS = [
 ];
 
 function CustomTabBar({ state, navigation }: any) {
+  const insets = useSafeAreaInsets();
   const addRoute = state.routes.find((r: any) => r.name === 'AddBudget');
 
   return (
@@ -87,7 +89,7 @@ function CustomTabBar({ state, navigation }: any) {
       </TouchableOpacity>
 
       {/* Tab bar with 4 evenly spaced tabs */}
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 28 : 12) }]}>
         {REGULAR_TABS.map((tab) => {
           const route = state.routes.find((r: any) => r.name === tab.name);
           const isFocused = route && state.routes[state.index]?.name === tab.name;
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     paddingTop: ADD_SIZE / 3,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+    paddingBottom: 12,
     paddingHorizontal: 8,
   },
   tabItem: {
