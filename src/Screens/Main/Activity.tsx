@@ -237,8 +237,6 @@ const styles = StyleSheet.create({
     fontSize: width * 0.03,
     color: 'grey',
   },
-
-  // tabs
   segment: {
     flexDirection: 'row',
     backgroundColor: '#EEE9F3',
@@ -266,8 +264,6 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans-Bold',
     color: '#1E1B2E',
   },
-
-  // list
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,

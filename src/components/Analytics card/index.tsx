@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { CommonStyles } from '../../utils/commonStyles';
 import { BarChart, PieChart } from 'react-native-gifted-charts';
+import { colorStyles } from '../../constants/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -213,19 +214,19 @@ const styles = StyleSheet.create({
   foodAndDiningIndicator:{
     width: 20,
     height: 20,
-    backgroundColor: '#177AD5',
+    backgroundColor: colorStyles.foodAndDinning,
     borderRadius: '50%',
   },
   billAndUtilitiesIndicator:{
     width: 20,
     height: 20,
-    backgroundColor: '#79D2DE',
+    backgroundColor: colorStyles.billAndUtilities,
     borderRadius: '50%',
   },
   ShoppingIndicator:{
     width: 20,
     height: 20,
-    backgroundColor: '#ED6665',
+    backgroundColor: colorStyles.shopping,
     borderRadius: '50%',
   } 
 

@@ -85,7 +85,7 @@ const TotalMonthlyEnvelop = () => {
 
       <View style={styles.detailsContainer}>
   <View>
-    <Text style={styles.detailsTitle}>Monthly Details</Text>
+    <Text style={styles.detailsTitle}>Month Details</Text>
     <Text style={styles.detailsSubtitle}>Remaining Days</Text>
   </View>
 

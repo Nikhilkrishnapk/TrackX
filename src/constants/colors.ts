@@ -3,4 +3,7 @@ export const colorStyles = {
   secondary: '#0F172A',
   tertiary: '#10B981',
   neutral: '#64748B',
+  foodAndDinning: '#177AD5',
+  billAndUtilities: '#79D2DE',
+  shopping: '#ED6665',
 };

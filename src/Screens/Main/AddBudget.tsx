@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Dimensions,
   KeyboardAvoidingView,
+  LayoutChangeEvent,
   Platform,
   ScrollView,
   StyleSheet,
@@ -33,22 +34,39 @@ const AddBudget = () => {
   const [note, setNote] = useState<string>('');
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryType>('food');
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  const scrollViewRef = useRef<ScrollView>(null);
+
   const handleSubmit = () => {
     console.log('Transaction saved:', { mode, amount, note, selectedCategory });
   };
 
+  const onHeaderLayout = (e: LayoutChangeEvent) => {
+    setHeaderHeight(e.nativeEvent.layout.height);
+  };
+
+  const handleNoteFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 300);
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header isBackButton={false} title="Add Transaction" />
+      <View onLayout={onHeaderLayout}>
+        <Header isBackButton={false} title="Add Transaction" />
+      </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
         >
           {/* screen container */}
           <View
@@ -132,6 +150,7 @@ const AddBudget = () => {
                 style={styles.noteInput}
                 value={note}
                 onChangeText={setNote}
+                onFocus={handleNoteFocus}
                 placeholder="Add a memo..."
                 placeholderTextColor="#B0A8B9"
                 selectionColor="#B51235"
