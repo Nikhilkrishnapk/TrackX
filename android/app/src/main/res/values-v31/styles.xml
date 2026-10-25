@@ -1,0 +1,13 @@
+<resources>
+
+    <!-- Android 12+ always shows a system splash (the app icon on a
+         background colour) before the app draws. Make it white so it
+         blends into the animated JS splash. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_background</item>
+    </style>
+
+</resources>
