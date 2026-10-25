@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Dimensions,
   StyleSheet,
@@ -7,22 +7,35 @@ import {
   View,
 } from 'react-native';
 import { CommonStyles } from '../../utils/commonStyles';
-import { BarChart, PieChart } from 'react-native-gifted-charts';
-import { colorStyles } from '../../constants/colors';
+import { PieChart } from 'react-native-gifted-charts';
+import { EXPENSE_CATEGORIES } from '../../constants/categories';
+import { Transaction } from '../../types';
+import { startOfMonth } from '../../utils/date';
+import { expensesByCategory, transactionsInMonth } from '../../utils/finance';
+import { formatCurrency, formatCurrencyShort } from '../../utils/money';
 
 const { width } = Dimensions.get('window');
 
-const AnalyticsCard = () => {
+type AnalyticsCardProps = {
+  // Must include at least this month and last month.
+  transactions: Transaction[];
+};
+
+const AnalyticsCard = ({ transactions }: AnalyticsCardProps) => {
   const [selectedPeriod, setSelectedPeriod] = useState<
     'thisMonth' | 'lastMonth'
   >('thisMonth');
 
-  //   data for pie chart
-  const pieData = [
-    { value: 54, color: '#177AD5', text: '₹54' },
-    { value: 40, color: '#79D2DE', text: '₹30' },
-    { value: 20, color: '#ED6665', text: '₹26' },
-  ];
+  const { pieData, totalMinor } = useMemo(() => {
+    const month = startOfMonth(new Date(), selectedPeriod === 'thisMonth' ? 0 : -1);
+    const byCategory = expensesByCategory(transactionsInMonth(transactions, month));
+    const data = EXPENSE_CATEGORIES.filter(c => (byCategory[c.id] ?? 0) > 0).map(c => ({
+      value: byCategory[c.id] ?? 0,
+      color: c.color,
+      text: formatCurrencyShort(byCategory[c.id] ?? 0),
+    }));
+    return { pieData: data, totalMinor: data.reduce((sum, d) => sum + d.value, 0) };
+  }, [transactions, selectedPeriod]);
 
   return (
     <View style={styles.container}>
@@ -83,37 +96,35 @@ const AnalyticsCard = () => {
       </View>
 
       {/* pie chart */}
-      <View style={styles.pieChartContainer}>
-        <View style={styles.pieChartInnerContainer}>
-        <PieChart
-          showText
-          textColor="black"
-          radius={80}
-          textSize={12}
-          showTextBackground
-          textBackgroundRadius={-1}
-          data={pieData}
-        />
+      {pieData.length === 0 ? (
+        <Text style={styles.emptyText}>
+          No expenses {selectedPeriod === 'thisMonth' ? 'this month' : 'last month'} yet
+        </Text>
+      ) : (
+        <View style={styles.pieChartContainer}>
+          <View style={styles.pieChartInnerContainer}>
+          <PieChart
+            showText
+            textColor="black"
+            radius={80}
+            textSize={12}
+            showTextBackground
+            textBackgroundRadius={-1}
+            data={pieData}
+          />
+          </View>
+
+          <View style={styles.pieChartDataIndicatorContainer}>
+            {EXPENSE_CATEGORIES.map(category => (
+              <View key={category.id} style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+                <View style={[styles.indicator, { backgroundColor: category.color }]}/>
+                <Text>{category.name}</Text>
+              </View>
+            ))}
+            <Text style={styles.totalText}>Total: {formatCurrency(totalMinor)}</Text>
+          </View>
         </View>
-
-        <View style={styles.pieChartDataIndicatorContainer}>
-
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
-                <View style={styles.foodAndDiningIndicator}/>
-                <Text>Food and Dinning</Text>
-            </View>
-
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
-                <View style={styles.billAndUtilitiesIndicator}/>
-                <Text>Bill and Utilities</Text>
-            </View>
-
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
-                <View style={styles.ShoppingIndicator}/>
-                <Text>Shopping</Text>
-            </View>
-        </View>
-      </View>
+      )}
 
     </View>
   );
@@ -211,24 +222,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  foodAndDiningIndicator:{
+  indicator: {
     width: 20,
     height: 20,
-    backgroundColor: colorStyles.foodAndDinning,
     borderRadius: '50%',
   },
-  billAndUtilitiesIndicator:{
-    width: 20,
-    height: 20,
-    backgroundColor: colorStyles.billAndUtilities,
-    borderRadius: '50%',
+
+  totalText: {
+    fontFamily: 'PlusJakartaSans-SemiBold',
+    fontSize: width * 0.032,
+    color: '#201B20',
+    marginTop: 4,
   },
-  ShoppingIndicator:{
-    width: 20,
-    height: 20,
-    backgroundColor: colorStyles.shopping,
-    borderRadius: '50%',
-  } 
+
+  emptyText: {
+    fontFamily: 'PlusJakartaSans-Regular',
+    fontSize: width * 0.034,
+    color: '#654F54',
+    textAlign: 'center',
+    paddingVertical: 40,
+  },
 
 });
 

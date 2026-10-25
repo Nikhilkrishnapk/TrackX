@@ -1,20 +1,33 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
   Dimensions,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import DownArrow from '../../assets/images/down-arrow.svg';
 import WalletIcon from '../../assets/images/wallet-icons.svg';
 import { CommonStyles } from '../../utils/commonStyles';
+import { formatCurrency } from '../../utils/money';
 
 const {width} = Dimensions.get('window');
 
-const TotalMonthlyEnvelop = () => {
-  const [showBalance, setShowBalance] = useState(true);
+type TotalMonthlyEnvelopProps = {
+  // Sum of all monthly budget limits.
+  totalMinor: number;
+  // This month's spending in budgeted categories.
+  spentMinor: number;
+  remainingDays: number;
+};
+
+const TotalMonthlyEnvelop = ({
+  totalMinor,
+  spentMinor,
+  remainingDays,
+}: TotalMonthlyEnvelopProps) => {
+  const remainingMinor = totalMinor - spentMinor;
+  const isOver = remainingMinor < 0;
 
   return (
     <LinearGradient
@@ -38,7 +51,7 @@ const TotalMonthlyEnvelop = () => {
       {/* ================= BALANCE ================= */}
       <View style={styles.balanceContainer}>
         <Text style={styles.balanceText}>
-          {showBalance ? '₹ 8,450.20' : '- - - - -'}
+          {formatCurrency(totalMinor)}
         </Text>
       </View>
 
@@ -57,8 +70,8 @@ const TotalMonthlyEnvelop = () => {
             </Text>
           </View>
 
-          <Text style={styles.summaryAmount}>
-            ₹ 4,800.00
+          <Text style={styles.summaryAmount} numberOfLines={1} adjustsFontSizeToFit>
+            {formatCurrency(spentMinor)}
           </Text>
         </View>
 
@@ -70,12 +83,15 @@ const TotalMonthlyEnvelop = () => {
             </View>
 
             <Text style={styles.summaryTitle}>
-              Remaining
+              {isOver ? 'Over budget' : 'Remaining'}
             </Text>
           </View>
 
-          <Text style={[styles.summaryAmount, {color: 'green'}]}>
-            ₹ 2,145.80
+          <Text
+            style={[styles.summaryAmount, {color: isOver ? '#FF8A8A' : 'green'}]}
+            numberOfLines={1}
+            adjustsFontSizeToFit>
+            {formatCurrency(Math.abs(remainingMinor))}
           </Text>
         </View>
 
@@ -89,7 +105,7 @@ const TotalMonthlyEnvelop = () => {
     <Text style={styles.detailsSubtitle}>Remaining Days</Text>
   </View>
 
-  <Text style={styles.detailsArrow}>8</Text>
+  <Text style={styles.detailsArrow}>{remainingDays}</Text>
 </View>
 
     </LinearGradient>

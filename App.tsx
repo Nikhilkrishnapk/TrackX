@@ -1,21 +1,14 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
+ * TrackX
  *
  * @format
  */
 
-import {
-  NavigationContainer,
-  NavigationContainerRef,
-} from '@react-navigation/native';
-import { StatusBar, Text, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native';
+import { StatusBar, useColorScheme } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import LoginManager from './src/navigation/LoginManager/LoginManager';
-import { useRef } from 'react';
+import { ToastProvider } from './src/components/Toast';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -23,18 +16,12 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <ToastProvider>
+        <NavigationContainer>
+          <LoginManager />
+        </NavigationContainer>
+      </ToastProvider>
     </SafeAreaProvider>
-  );
-}
-
-function AppContent() {
-  const navigationRef = useRef<NavigationContainerRef<any>>(null);
-
-  return (
-    <NavigationContainer ref={navigationRef}>
-      <LoginManager />
-    </NavigationContainer>
   );
 }
 

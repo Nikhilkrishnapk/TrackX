@@ -1,0 +1,106 @@
+rules_version = '2';
+
+// TrackX Firestore Security Rules
+// Every document lives under users/{uid}; only that signed-in user can
+// read or write it. Writes are validated so a modified client cannot store
+// malformed data. Deploy with: firebase deploy --only firestore:rules
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isMinorAmount(value) {
+      // Integer paise, up to ₹1,00,00,000 (matches MAX_AMOUNT_MINOR).
+      return value is int && value > 0 && value <= 1000000000;
+    }
+
+    // Totals may be stored as int OR double: on Android, React Native
+    // Firebase always sends increment() as a double. Integer-valued doubles
+    // are exact up to 2^53, so we only require a whole number.
+    function isWholeNumber(value) {
+      return value is int || (value is float && value == math.floor(value));
+    }
+
+    function createdAtUnchanged() {
+      return request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null);
+    }
+
+    // ---------- users/{uid} ----------
+    function validTotals(data) {
+      return !('totals' in data) || (
+        data.totals is map
+        && data.totals.keys().hasOnly(['incomeMinor', 'expenseMinor'])
+        && isWholeNumber(data.totals.get('incomeMinor', 0))
+        && isWholeNumber(data.totals.get('expenseMinor', 0))
+      );
+    }
+
+    function validUserValues(data) {
+      return (!('username' in data) || (data.username is string && data.username.size() > 0 && data.username.size() <= 50))
+        && (!('email' in data) || data.email is string)
+        && validTotals(data);
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['username', 'email', 'totals', 'createdAt', 'updatedAt'])
+        && validUserValues(request.resource.data);
+      // Only the fields being changed are checked, so older profile documents
+      // that contain extra fields (e.g. `wallet`) can still be updated.
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username', 'email', 'totals', 'updatedAt'])
+        && validUserValues(request.resource.data);
+      allow delete: if false;
+
+      // ---------- users/{uid}/transactions/{transactionId} ----------
+      function validTransaction(data) {
+        return data.keys().hasOnly(['type', 'amountMinor', 'category', 'note', 'transactionDate', 'createdAt', 'updatedAt'])
+          && data.keys().hasAll(['type', 'amountMinor', 'category', 'note', 'transactionDate', 'createdAt', 'updatedAt'])
+          && data.type in ['income', 'expense']
+          && isMinorAmount(data.amountMinor)
+          && data.category is string && data.category.size() > 0 && data.category.size() <= 30
+          && data.note is string && data.note.size() <= 100
+          && data.transactionDate is timestamp
+          && data.updatedAt == request.time;
+      }
+
+      match /transactions/{transactionId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && validTransaction(request.resource.data)
+          && request.resource.data.createdAt == request.time;
+        allow update: if isOwner(uid)
+          && validTransaction(request.resource.data)
+          && createdAtUnchanged();
+      }
+
+      // ---------- users/{uid}/budgets/{category} ----------
+      function validBudget(data, budgetId) {
+        return data.keys().hasOnly(['category', 'limitMinor', 'period', 'createdAt', 'updatedAt'])
+          && data.category == budgetId
+          && isMinorAmount(data.limitMinor)
+          && data.period == 'monthly'
+          && data.updatedAt == request.time;
+      }
+
+      match /budgets/{budgetId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && validBudget(request.resource.data, budgetId)
+          && request.resource.data.createdAt == request.time;
+        allow update: if isOwner(uid)
+          && validBudget(request.resource.data, budgetId)
+          && createdAtUnchanged();
+      }
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

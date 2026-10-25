@@ -3,41 +3,52 @@ import {
   Dimensions,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import {CommonStyles} from '../../utils/commonStyles';
+import {formatCurrency} from '../../utils/money';
 
 const {width} = Dimensions.get('window');
+
+const EXCEEDED_COLOR = '#C4213A';
 
 interface ExpenseLimitCardProps {
   scaleColor: string;
   title: string;
-  value: number;
-  totalExpense: number;
+  // amounts in paise
+  spentMinor: number;
+  limitMinor: number;
   icon: React.ReactNode;
   remainingDays: number;
-  dailySafeAmount: number;
+  onPress?: () => void;
 }
 
 const BudgetScale = ({
   scaleColor,
   title,
-  value,
-  totalExpense,
+  spentMinor,
+  limitMinor,
   icon,
   remainingDays,
-  dailySafeAmount,
+  onPress,
 }: ExpenseLimitCardProps) => {
-  const percentage =
-    totalExpense > 0
-      ? (value / totalExpense) * 100
-      : 0;
+  const percentage = limitMinor > 0 ? (spentMinor / limitMinor) * 100 : 0;
+  const remainingMinor = limitMinor - spentMinor;
+  const isExceeded = remainingMinor < 0;
+  const dailySafeMinor =
+    !isExceeded && remainingDays > 0 ? Math.floor(remainingMinor / remainingDays) : 0;
+  const barColor = isExceeded ? EXCEEDED_COLOR : scaleColor;
 
   // Prevent the progress bar from exceeding 100%
   const progress = Math.min(Math.max(percentage, 0), 100);
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity
+      activeOpacity={0.85}
+      disabled={!onPress}
+      onPress={onPress}
+      style={styles.container}>
       {/* Top section */}
       <View style={styles.topContainer}>
         {/* Icon */}
@@ -60,14 +71,14 @@ const BudgetScale = ({
           </Text>
 
           <Text style={styles.limitText}>
-            {Math.round(percentage)}% of total
+            {Math.round(percentage)}% of {formatCurrency(limitMinor)}
           </Text>
         </View>
 
         {/* Amount */}
         <View style={styles.amountContainer}>
           <Text style={styles.amount}>
-            ${value.toFixed(2)}
+            {formatCurrency(spentMinor)}
           </Text>
         </View>
       </View>
@@ -79,7 +90,7 @@ const BudgetScale = ({
             styles.progress,
             {
               width: `${progress}%`,
-              backgroundColor: scaleColor,
+              backgroundColor: barColor,
             },
           ]}
         />
@@ -92,18 +103,20 @@ const BudgetScale = ({
             style={[
               styles.remainingText,
               {
-                color: scaleColor,
+                color: barColor,
               },
             ]}>
-            ${value.toFixed(2)} spent
+            {isExceeded
+              ? `Over by ${formatCurrency(-remainingMinor)}`
+              : `${formatCurrency(remainingMinor)} left`}
           </Text>
         </View>
 
         <Text style={styles.dailySafeText}>
-          Daily safe: ${dailySafeAmount.toFixed(2)}
+          Daily safe: {formatCurrency(dailySafeMinor)}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

@@ -7,33 +7,22 @@ import {
   View,
 } from 'react-native';
 import {CommonStyles} from '../../utils/commonStyles';
-import FOODICON from '../../assets/images/food-icon.svg';
-import BILLICON from '../../assets/images/bill-icon.svg';
-import SHOPPINGICON from '../../assets/images/shopping-icon.svg';
+import {CategoryDefinition} from '../../constants/categories';
 
 const {width} = Dimensions.get('window');
 
-type CategoryType = 'food' | 'bills' | 'shopping';
-
-interface Category {
-  id: CategoryType;
-  name: string;
-  Icon: React.FC<{ width: number; height: number; color?: string }>;
+interface CategoryPickerProps<Id extends string> {
+  categories: CategoryDefinition[];
+  selectedCategory: Id;
+  onSelect: (category: Id) => void;
 }
 
-const categories: Category[] = [
-  { id: 'food',     name: 'Food & Dining',    Icon: FOODICON },
-  { id: 'bills',    name: 'Bills & Utilities', Icon: BILLICON },
-  { id: 'shopping', name: 'Shopping',          Icon: SHOPPINGICON },
-];
-
-interface CategoryPickerProps {
-  selectedCategory: CategoryType;
-  onSelect: (category: CategoryType) => void;
-}
-
-const CategoryPicker = ({ selectedCategory, onSelect }: CategoryPickerProps) => {
-  const handleCategorySelect = (category: CategoryType) => {
+const CategoryPicker = <Id extends string>({
+  categories,
+  selectedCategory,
+  onSelect,
+}: CategoryPickerProps<Id>) => {
+  const handleCategorySelect = (category: Id) => {
     onSelect(category);
   };
 
@@ -68,20 +57,24 @@ const CategoryPicker = ({ selectedCategory, onSelect }: CategoryPickerProps) => 
             <TouchableOpacity
               key={category.id}
               activeOpacity={0.8}
-              onPress={() => handleCategorySelect(category.id)}
+              onPress={() => handleCategorySelect(category.id as Id)}
               style={styles.categoryItem}>
-              
-              {/* Icon */}
+
+              {/* Icon (falls back to the emoji when there is no svg) */}
               <View
                 style={[
                   styles.iconContainer,
                   isSelected && styles.selectedIconContainer,
                 ]}>
-                <category.Icon
-                  width={width * 0.065}
-                  height={width * 0.065}
-                  color={isSelected ? '#FFFFFF' : '#654F54'}
-                />
+                {category.Icon ? (
+                  <category.Icon
+                    width={width * 0.065}
+                    height={width * 0.065}
+                    color={isSelected ? '#FFFFFF' : '#654F54'}
+                  />
+                ) : (
+                  <Text style={styles.emoji}>{category.emoji}</Text>
+                )}
               </View>
 
               {/* Name */}
@@ -171,6 +164,10 @@ const styles = StyleSheet.create({
 
   selectedIconContainer: {
     backgroundColor: '#C51F3A',
+  },
+
+  emoji: {
+    fontSize: width * 0.06,
   },
 
   categoryName: {

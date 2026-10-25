@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { CommonStyles } from '../../utils/commonStyles';
@@ -7,7 +7,12 @@ import ProfileIcon from '../../assets/images/profile-icon.svg';
 
 const { width } = Dimensions.get('window');
 
-const ProfileCard = () => {
+type ProfileCardProps = {
+  name: string;
+  email: string;
+};
+
+const ProfileCard = ({ name, email }: ProfileCardProps) => {
   return (
     <LinearGradient
       colors={['#C4213A', '#3A1230', '#1A0E24']}
@@ -18,8 +23,12 @@ const ProfileCard = () => {
         <ProfileIcon width={width * 0.1} height={ width * 0.1}/>
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>ACCOUNT USRNAME</Text>
-          <Text style={styles.mailTxt}>username@gmail.com</Text>
+          <Text style={styles.title} numberOfLines={1}>
+            {name.toUpperCase()}
+          </Text>
+          <Text style={styles.mailTxt} numberOfLines={1}>
+            {email}
+          </Text>
 
           <View style={styles.verifyContainer}>
             <VerificationIcon width={width * 0.07} height={width * 0.07} />

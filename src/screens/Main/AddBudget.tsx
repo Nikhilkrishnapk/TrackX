@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   KeyboardAvoidingView,
@@ -16,30 +16,89 @@ import Header from '../../components/Header';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CategoryPicker from '../../components/CategoryPicker';
 import NoteIcon from '../../assets/images/note-icon.svg';
+import { useAppData } from '../../context/AppDataContext';
+import { addTransaction } from '../../services/firebase/transactions';import { getCategoriesForType, getCategory } from '../../constants/categories';
+import { useToast } from '../../components/Toast';
+import { CategoryId, TransactionType } from '../../types';
+import { formatCurrency, parseAmountToMinor } from '../../utils/money';
+import type { TabScreenProps } from '../../navigation/types';
 
-const { height, width } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-type Filter = 'expense' | 'income';
-
-const TABS: { key: Filter; label: string }[] = [
+const TABS: { key: TransactionType; label: string }[] = [
   { key: 'expense', label: 'Expense' },
   { key: 'income', label: 'Income' },
 ];
 
-type CategoryType = 'food' | 'bills' | 'shopping';
+const defaultCategory = (type: TransactionType): CategoryId =>
+  getCategoriesForType(type)[0].id;
 
-const AddBudget = () => {
-  const [mode, setMode] = useState<Filter>('expense');
+const AddBudget = ({ navigation, route }: TabScreenProps<'AddBudget'>) => {
+  const { user } = useAppData();
+  const toast = useToast();
+  const [mode, setMode] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState<string>('');
+  const [amountError, setAmountError] = useState('');
   const [note, setNote] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] =
-    useState<CategoryType>('food');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryId>(
+    defaultCategory('expense'),
+  );
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const scrollViewRef = useRef<ScrollView>(null);
 
+  const changeMode = (nextMode: TransactionType) => {
+    setMode(nextMode);
+    // Categories differ per type, so pick a valid one for the new type.
+    setSelectedCategory(defaultCategory(nextMode));
+  };
+
+  // "Add Money" on Home opens this screen with { mode: 'income' }.
+  const requestedMode = route.params?.mode;
+  useEffect(() => {
+    if (requestedMode) {
+      setMode(requestedMode);
+      setSelectedCategory(defaultCategory(requestedMode));
+      navigation.setParams({ mode: undefined });
+    }
+  }, [requestedMode, navigation]);
+
+  const handleAmountChange = (text: string) => {
+    setAmount(text);
+    if (amountError) {
+      setAmountError('');
+    }
+  };
+
   const handleSubmit = () => {
-    console.log('Transaction saved:', { mode, amount, note, selectedCategory });
+    const parsed = parseAmountToMinor(amount);
+    if (!parsed.ok) {
+      setAmountError(parsed.error);
+      return;
+    }
+
+    const { committed } = addTransaction(user.uid, {
+      type: mode,
+      amountMinor: parsed.amountMinor,
+      category: selectedCategory,
+      note,
+      transactionDate: new Date(),
+    });
+
+    // Firestore has already applied the write locally, so every screen is
+    // updated. Clearing the form right away also blocks a double submit
+    // (an empty amount fails validation).
+    setAmount('');
+    setNote('');
+    toast.success(
+      mode === 'expense' ? 'Expense saved' : 'Income added',
+      `${formatCurrency(parsed.amountMinor)} · ${getCategory(selectedCategory)?.name ?? ''}`,
+    );
+
+    committed.catch(e => {
+      console.warn('Saving transaction failed', e);
+      toast.error('Could not save transaction', 'The server rejected it. Please try again.');
+    });
   };
 
   const onHeaderLayout = (e: LayoutChangeEvent) => {
@@ -83,7 +142,7 @@ const AddBudget = () => {
                   <TouchableOpacity
                     key={tab.key}
                     activeOpacity={0.8}
-                    onPress={() => setMode(tab.key)}
+                    onPress={() => changeMode(tab.key)}
                     style={styles.segmentItem}
                   >
                     {active ? (
@@ -123,7 +182,7 @@ const AddBudget = () => {
                   <TextInput
                     style={styles.amountInput}
                     value={amount}
-                    onChangeText={setAmount}
+                    onChangeText={handleAmountChange}
                     placeholder="0.00"
                     placeholderTextColor="#1E1B2E"
                     keyboardType="decimal-pad"
@@ -132,10 +191,14 @@ const AddBudget = () => {
                   />
                 </View>
               </View>
+              {amountError ? (
+                <Text style={styles.errorText}>{amountError}</Text>
+              ) : null}
             </View>
 
             {/* category selector */}
             <CategoryPicker
+              categories={getCategoriesForType(mode)}
               selectedCategory={selectedCategory}
               onSelect={setSelectedCategory}
             />
@@ -260,6 +323,13 @@ const styles = StyleSheet.create({
     lineHeight: 60,
     color: '#1E1B2E',
     alignItems: 'center',
+  },
+  errorText: {
+    marginTop: 6,
+    marginLeft: 8,
+    fontFamily: 'PlusJakartaSans-Regular',
+    fontSize: 13,
+    color: '#C4213A',
   },
   noteCard: {
     flexDirection: 'row',

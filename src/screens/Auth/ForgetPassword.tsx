@@ -134,7 +134,7 @@ function ForgetPassword() {
                 style={[styles.divider, emailError && styles.dividerError]}
               />
 
-              <TouchableOpacity onPress={handleSubmit} activeOpacity={0.85}>
+              <TouchableOpacity onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
                 <LinearGradient
                   colors={['#C4213A', '#3A1230', '#1A0E24']}
                   start={{ x: 0, y: 0.5 }}

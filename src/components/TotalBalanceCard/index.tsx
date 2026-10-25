@@ -11,11 +11,25 @@ import UpArrow from '../../assets/images/up-arrow.svg';
 import DownArrow from '../../assets/images/down-arrow.svg';
 import EyeButton from '../../assets/images/eyebtn-grey.svg';
 import { CommonStyles } from '../../utils/commonStyles';
+import { formatCurrency } from '../../utils/money';
 
 const {width} = Dimensions.get('window');
 
-const TotalBalanceCard = () => {
+type TotalBalanceCardProps = {
+  incomeMinor: number;
+  expenseMinor: number;
+  onAddMoney: () => void;
+  onAnalytics: () => void;
+};
+
+const TotalBalanceCard = ({
+  incomeMinor,
+  expenseMinor,
+  onAddMoney,
+  onAnalytics,
+}: TotalBalanceCardProps) => {
   const [showBalance, setShowBalance] = useState(true);
+  const balanceMinor = incomeMinor - expenseMinor;
 
   return (
     <LinearGradient
@@ -48,7 +62,7 @@ const TotalBalanceCard = () => {
       {/* ================= BALANCE ================= */}
       <View style={styles.balanceContainer}>
         <Text style={styles.balanceText}>
-          {showBalance ? '₹ 8,450.20' : '- - - - -'}
+          {showBalance ? formatCurrency(balanceMinor) : '- - - - -'}
         </Text>
       </View>
 
@@ -67,8 +81,8 @@ const TotalBalanceCard = () => {
             </Text>
           </View>
 
-          <Text style={styles.summaryAmount}>
-            ₹ 4,800.00
+          <Text style={styles.summaryAmount} numberOfLines={1} adjustsFontSizeToFit>
+            {showBalance ? formatCurrency(incomeMinor) : '- - - -'}
           </Text>
         </View>
 
@@ -84,8 +98,8 @@ const TotalBalanceCard = () => {
             </Text>
           </View>
 
-          <Text style={styles.summaryAmount}>
-            ₹ 2,145.80
+          <Text style={styles.summaryAmount} numberOfLines={1} adjustsFontSizeToFit>
+            {showBalance ? formatCurrency(expenseMinor) : '- - - -'}
           </Text>
         </View>
 
@@ -97,6 +111,7 @@ const TotalBalanceCard = () => {
         {/* Add Money */}
         <TouchableOpacity
           activeOpacity={0.8}
+          onPress={onAddMoney}
           style={styles.actionButton}>
 
           <Text style={styles.actionIcon}>＋</Text>
@@ -109,6 +124,7 @@ const TotalBalanceCard = () => {
         {/* Analytics */}
         <TouchableOpacity
           activeOpacity={0.8}
+          onPress={onAnalytics}
           style={styles.actionButton}>
 
           <Text style={styles.actionIcon}>✦</Text>

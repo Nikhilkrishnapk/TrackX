@@ -2,10 +2,15 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
 import WavingHandImoji from '../../assets/images/waving-hand.svg';
 import { CommonStyles } from '../../utils/commonStyles';
+import { getGreeting } from '../../utils/date';
 
-const { height, width } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-const Greeting = () => {
+type GreetingProps = {
+  name: string;
+};
+
+const Greeting = ({ name }: GreetingProps) => {
   // animation of the hand imoji
   const handPosition = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -34,7 +39,9 @@ const Greeting = () => {
   return (
     <View>
       <View style={styles.greetingsContainer}>
-        <Text style={styles.greetingText}>Good morning, USERNAME</Text>
+        <Text style={styles.greetingText} numberOfLines={1}>
+          {getGreeting()}, {name}
+        </Text>
         <Animated.View
           style={{
             transform: [
@@ -64,6 +71,7 @@ const styles = StyleSheet.create({
   },
 
   greetingText: {
+    flexShrink: 1,
     fontFamily: 'PlusJakartaSans-Medium',
     fontSize: width * CommonStyles.header,
   },

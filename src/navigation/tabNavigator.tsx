@@ -7,7 +7,11 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {
+  createBottomTabNavigator,
+  type BottomTabBarProps,
+} from '@react-navigation/bottom-tabs';
+import type { TabParamList } from './types';
 import Svg, { Path, Circle } from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -59,23 +63,26 @@ function ProfileIcon({ color }: { color: string }) {
   );
 }
 
-const REGULAR_TABS = [
+const REGULAR_TABS: {
+  name: Exclude<keyof TabParamList, 'AddBudget'>;
+  label: string;
+  Icon: (props: { color: string }) => React.JSX.Element;
+}[] = [
   { name: 'Home',     label: 'Home',     Icon: HomeIcon },
   { name: 'Activity', label: 'Activity', Icon: ActivityIcon },
   { name: 'Budget',   label: 'Budgets',  Icon: BudgetIcon },
   { name: 'Profile',  label: 'Profile',  Icon: ProfileIcon },
 ];
 
-function CustomTabBar({ state, navigation }: any) {
+function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const addRoute = state.routes.find((r: any) => r.name === 'AddBudget');
 
   return (
     <View style={styles.container}>
       {/* Floating + button absolutely centered at top */}
       <TouchableOpacity
         style={styles.addWrapper}
-        onPress={() => navigation.navigate(addRoute.name)}
+        onPress={() => navigation.navigate('AddBudget')}
         activeOpacity={0.85}>
         <LinearGradient
           colors={['#C4213A', '#3A1230', '#1A0E24']}
@@ -91,7 +98,7 @@ function CustomTabBar({ state, navigation }: any) {
       {/* Tab bar with 4 evenly spaced tabs */}
       <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 28 : 12) }]}>
         {REGULAR_TABS.map((tab) => {
-          const route = state.routes.find((r: any) => r.name === tab.name);
+          const route = state.routes.find(r => r.name === tab.name);
           const isFocused = route && state.routes[state.index]?.name === tab.name;
           const color = isFocused ? ACTIVE : INACTIVE;
 
@@ -111,7 +118,7 @@ function CustomTabBar({ state, navigation }: any) {
   );
 }
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<TabParamList>();
 
 export default function TabNavigator() {
   return (

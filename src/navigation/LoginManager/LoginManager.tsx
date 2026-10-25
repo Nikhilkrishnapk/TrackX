@@ -1,38 +1,19 @@
-// import React from 'react';
-// import AuthNavigator from '../AuthNavigator';
-// import HomeNavigator from '../HomeNavigator';
-
-// const LoginManager = () => {
-
-//   const isLoggedIn: Boolean = false;
-
-//   return <>{isLoggedIn ? <HomeNavigator /> : <AuthNavigator />}</>;
-// };
-
-// export default LoginManager;
-
 import React, { useEffect, useState } from 'react';
-import { getApp } from '@react-native-firebase/app';
-import {
-  getAuth,
-  onAuthStateChanged,
-  FirebaseAuthTypes,
-} from '@react-native-firebase/auth';
-import { NavigationContainer } from '@react-navigation/native';
+import { onAuthStateChanged, type User } from '@react-native-firebase/auth';
 import { ActivityIndicator, View } from 'react-native';
 import AuthNavigator from '../AuthNavigator';
 import HomeNavigator from '../HomeNavigator';
-
-const auth = getAuth(getApp());
+import { auth } from '../../services/firebase/client';
+import { AppDataProvider } from '../../context/AppDataContext';
 
 export default function LoginManager() {
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+    const unsubscribe = onAuthStateChanged(auth, u => {
       setUser(u);
-      if (initializing) setInitializing(false);
+      setInitializing(false);
     });
     return unsubscribe;
   }, []);
@@ -45,5 +26,14 @@ export default function LoginManager() {
     );
   }
 
-  return <>{user ? <HomeNavigator /> : <AuthNavigator />}</>;
+  if (!user) {
+    return <AuthNavigator />;
+  }
+
+  // key={uid}: a different account gets a fresh provider with no stale data.
+  return (
+    <AppDataProvider key={user.uid} user={user}>
+      <HomeNavigator />
+    </AppDataProvider>
+  );
 }

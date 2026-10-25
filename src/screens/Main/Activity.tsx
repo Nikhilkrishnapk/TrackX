@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   ScrollView,
   StyleSheet,
@@ -9,7 +10,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../../components/Header';
+import TransactionRow from '../../components/TransactionRow';
 import { CommonStyles } from '../../utils/commonStyles';
+import { useAppData } from '../../context/AppDataContext';
+import { useTransactionHistory } from '../../hooks/useTransactionHistory';
+import { deleteTransaction, restoreTransaction } from '../../services/firebase/transactions';
+import { useToast } from '../../components/Toast';
+import { Transaction } from '../../types';
+import { formatCurrency } from '../../utils/money';
 
 const { width } = Dimensions.get('window');
 
@@ -22,99 +30,55 @@ const TABS: { key: Filter; label: string }[] = [
 ];
 
 const Activity = () => {
+  const { user } = useAppData();
+  const toast = useToast();
   const [filter, setFilter] = useState<Filter>('all');
+  const { transactions, loading, error, hasMore, loadMore } = useTransactionHistory(
+    user.uid,
+    filter === 'all' ? undefined : filter,
+  );
 
-  const transactions= [
-    {
-      id: '1',
-      title: 'Whole Foods Market',
-      category: 'Groceries',
-      emoji: '🥦',
-      time: '2:15 PM',
-      amount: 68.4,
-      type: 'expense',
-      icon: 'basket-outline',
-      tileColor: '#E9DDF7',
-      iconColor: '#5B4B73',
-    },
-    {
-      id: '2',
-      title: 'Uber Ride',
-      category: 'Transport',
-      emoji: '🚘',
-      time: '9:30 AM',
-      amount: 18.25,
-      type: 'expense',
-      icon: 'car-outline',
-      tileColor: '#F8D9D6',
-      iconColor: '#5A1A1A',
-    },
-    {
-      id: '3',
-      title: 'Upwork Payout',
-      category: 'Freelance',
-      emoji: '💻',
-      time: '4:00 PM',
-      amount: 850,
-      type: 'income',
-      icon: 'laptop-outline',
-      tileColor: '#93F5C3',
-      iconColor: '#12372A',
-    },
-    {
-      id: '4',
-      title: 'Olive Garden',
-      category: 'Dining',
-      emoji: '🍝',
-      time: '7:45 PM',
-      amount: 54.1,
-      type: 'expense',
-      icon: 'restaurant-outline',
-      tileColor: '#E9DDF7',
-      iconColor: '#1E1B2E',
-    },
-    {
-      id: '5',
-      title: 'Zara Autumn Coat',
-      category: 'Shopping',
-      emoji: '🛍️',
-      time: '1:10 PM',
-      amount: 129,
-      type: 'expense',
-      icon: 'shirt-outline',
-      tileColor: '#F4B5B5',
-      iconColor: '#8A1C2B',
-    },
-    {
-      id: '6',
-      title: 'Monthly Salary',
-      category: 'Salary income',
-      emoji: '🏦',
-      time: '9:00 AM',
-      amount: 3200,
-      type: 'income',
-      icon: 'business-outline',
-      tileColor: '#93F5C3',
-      iconColor: '#12372A',
-    },
-    {
-      id: '7',
-      title: 'Electric & Gas Utility',
-      category: 'Bills',
-      emoji: '⚡',
-      time: '11:15 AM',
-      amount: 112.5,
-      type: 'expense',
-      icon: 'flash-outline',
-      tileColor: '#E9DDF7',
-      iconColor: '#5B4B73',
-    },
-  ];
+  // Delete straight away and offer Undo, instead of an "Are you sure?" dialog.
+  const handleDelete = (transaction: Transaction) => {
+    // The listener removes the row immediately (local cache);
+    // the promise only settles once the server confirms.
+    deleteTransaction(user.uid, transaction).catch(e => {
+      console.warn('Delete failed', e);
+      toast.error('Could not delete transaction', 'Please try again.');
+    });
 
-  const filtered =
-    filter === 'all'
-      ? transactions
-      : transactions.filter(t => t.type === filter);
+    toast.show({
+      type: 'info',
+      title: 'Transaction deleted',
+      message: `${transaction.type === 'income' ? '+' : '-'}${formatCurrency(transaction.amountMinor)} removed from your totals`,
+      actionLabel: 'Undo',
+      onAction: () => {
+        restoreTransaction(user.uid, transaction).catch(e => {
+          console.warn('Undo delete failed', e);
+          toast.error('Could not restore transaction', 'Please add it again.');
+        });
+      },
+    });
+  };
+
+  const renderList = () => {
+    if (loading && transactions.length === 0) {
+      return <ActivityIndicator style={styles.loader} color="#C4213A" />;
+    }
+    if (error) {
+      return <Text style={styles.message}>{error}</Text>;
+    }
+    if (transactions.length === 0) {
+      return (
+        <Text style={styles.message}>
+          No {filter === 'all' ? '' : `${filter} `}transactions yet.
+        </Text>
+      );
+    }
+    return transactions.map(item => (
+      <TransactionRow key={item.id} transaction={item} onLongPress={handleDelete} />
+    ));
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -127,7 +91,9 @@ const Activity = () => {
           {/* heading */}
           <View>
             <Text style={styles.headerTitle}>Activity Log</Text>
-            <Text style={styles.headerDescription}>Review Your Cashflow</Text>
+            <Text style={styles.headerDescription}>
+              Review Your Cashflow  •  Long-press to delete
+            </Text>
           </View>
 
           {/* tabs */}
@@ -155,61 +121,18 @@ const Activity = () => {
           </View>
 
           {/* list */}
-          <View style={styles.card}>
-            {filtered.map(item => {
-              const isIncome = item.type === 'income';
-              return (
-                <View key={item.id} style={styles.row}>
-                  <View
-                    style={[
-                      styles.iconTile,
-                      { backgroundColor: item.tileColor },
-                    ]}
-                  >
-                    {/* <Ionicons
-                      name={item.icon}
-                      size={24}
-                      color={item.iconColor}
-                    /> */}
-                  </View>
+          <View style={styles.card}>{renderList()}</View>
 
-                  <View style={styles.info}>
-                    <Text style={styles.title} numberOfLines={1}>
-                      {item.title}
-                    </Text>
-                    <Text style={styles.subtitle} numberOfLines={1}>
-                      {item.category} {item.emoji}  •  {item.time}
-                    </Text>
-                  </View>
-
-                  <View style={styles.right}>
-                    <Text
-                      style={[styles.amount, isIncome && styles.amountIncome]}
-                    >
-                      {isIncome ? '+' : '-'}${item.amount.toFixed(2)}
-                    </Text>
-                    <View
-                      style={[
-                        styles.badge,
-                        isIncome ? styles.badgeIncome : styles.badgeExpense,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          isIncome
-                            ? styles.badgeTextIncome
-                            : styles.badgeTextExpense,
-                        ]}
-                      >
-                        {isIncome ? 'Income' : 'Expense'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
+          {hasMore && !error ? (
+            <TouchableOpacity
+              style={styles.loadMore}
+              onPress={loadMore}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.loadMoreText}>{loading ? 'Loading…' : 'Load more'}</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -271,65 +194,28 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     elevation: 2,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
+  loader: {
+    paddingVertical: 30,
   },
-  iconTile: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  info: {
-    flex: 1,
-    marginHorizontal: 12,
-  },
-  title: {
-    fontFamily: 'PlusJakartaSans-Bold',
-    fontSize: 16,
-    color: '#1E1B2E',
-  },
-  subtitle: {
+  message: {
     fontFamily: 'PlusJakartaSans-Regular',
-    fontSize: 13,
+    fontSize: 14,
     color: '#7C768A',
-    marginTop: 2,
+    textAlign: 'center',
+    paddingVertical: 30,
   },
-  right: {
-    alignItems: 'flex-end',
+  loadMore: {
+    marginTop: 14,
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#EEE9F3',
   },
-  amount: {
-    fontFamily: 'PlusJakartaSans-Bold',
-    fontSize: 19,
+  loadMoreText: {
+    fontFamily: 'PlusJakartaSans-SemiBold',
+    fontSize: 14,
     color: '#1E1B2E',
-  },
-  amountIncome: {
-    color: '#2E6B4F',
-  },
-  badge: {
-    marginTop: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    borderRadius: 12,
-  },
-  badgeExpense: {
-    backgroundColor: '#F8D7D5',
-  },
-  badgeIncome: {
-    backgroundColor: '#2E6B4F',
-  },
-  badgeText: {
-    fontFamily: 'PlusJakartaSans-Regular',
-    fontSize: 12,
-  },
-  badgeTextExpense: {
-    color: '#9B1C1C',
-  },
-  badgeTextIncome: {
-    color: '#FFFFFF',
   },
 });
 
